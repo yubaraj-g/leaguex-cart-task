@@ -1,13 +1,50 @@
-body {
+@tailwind base;
+@tailwind components;
+
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  width: 100vw;
+  height: 100vh;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.div-shadow {
+  box-shadow: 0px 6px 15px #80808050;
+}
+
+#shopping_cart h3 {
+  font-size: 1.7rem;
+  font-weight: 600;
+}
+
+@media screen and (width < 768px) {
+  nav ul li:nth-child(1) {
+    display: none;
+  }
+}
+
+
+
+
+  @tailwind utilities;
