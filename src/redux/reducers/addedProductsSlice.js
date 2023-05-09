@@ -20,6 +20,8 @@ export const addedProductSlice = createSlice({
         },
         removeProducts: {
             reducer(state, action) {
+                // This action is for removing one single product at a time
+                /** First it takes the index of the product from the state and then array.splice takes out the element from the array and array.filter is not being used since we want to remove only one item not alll of it's kind */
                 const incomingProduct = action.payload
                 let index = null
                 state.data.forEach((product, i) => {

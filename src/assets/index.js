@@ -1,4 +1,4 @@
-import CartIcon from "./icons/CartIcon.jsx"
-import SearchIcon from "./icons/SearchIcon.jsx"
+import CartIcon from "./iconComponents/CartIcon.jsx"
+import SearchIcon from "./iconComponents/SearchIcon.jsx"
 
 export { CartIcon, SearchIcon }
