@@ -36,7 +36,7 @@ const Navbar = () => {
                                 <CartDiv />
                                 : <div className='w-full flex flex-col'>
                                     Shopping Cart
-                                    <div className={`h-[1px] w-[70%] bg-black`}></div>
+                                    <div className={`h-[1.5px] w-[70%] bg-black`}></div>
                                 </div>
                         }
                     </Link>

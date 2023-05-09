@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { addProducts, addedProducts } from '../redux/reducers/addedProductsSlice'
 
@@ -19,7 +19,6 @@ const ProductCard = ({ product }) => {
         /** After getting the count of the product that already is in the cart (redux state), below if statement will check if the alreadyAddedProductsCount is less than the actual stock count of the product only then add one more product, or else alert that "maximum stock has been added" */
         if (alreadyAddedProductsCount < quantity) {
             dispatch(addProducts(product))
-            // alert('Product added to cart')
         } else {
             alert("Maximum stock has been added.")
         }
@@ -39,6 +38,9 @@ const ProductCard = ({ product }) => {
                 <div className='flex justify-between items-center'>
                     <h6 className='font-semibold'>{price}&nbsp;{currency}</h6>
                     <button className='bg-gray-500 hover:bg-gray-600 text-white px-3 py-1' onClick={addToCart}>Add to cart</button>
+                </div>
+                <div className='flex justify-between items-center'>
+                    <h6 className='text-sm'>Maximum Quantity:&nbsp;{quantity}</h6>
                 </div>
             </div>
         </>

@@ -1,13 +1,12 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useFetchApi } from '../hooks/useFetchApi'
+import { useState, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { allData } from '../redux/reducers/allProductsSlice'
 import { SearchIcon } from '../assets'
 import ProductCard from '../components/ProductCard'
+// import { useFetchApi } from '../hooks/useFetchApi'
 
 
 const Store = ({ apiCall }) => {
-  console.log("store render")
   const allProductsData = useSelector(allData)  /** Api response object with JSON data from redux state after the api call */
   const { data, loading, error } = allProductsData    /** destructuring the state that comes from redux */
 
@@ -15,10 +14,9 @@ const Store = ({ apiCall }) => {
   // const fetchedData = useFetchApi('https://leaguex.s3.ap-south-1.amazonaws.com/task/shopping/catalogue.json')
   // const { data, error, loading } = fetchedData
 
-  /** So using the function that is in the useCallback hook in the parent component will not re-run on every render of this component */
+  /** Below using the function that is in the useCallback hook in the parent component will not re-run on every render of this component */
   useEffect(() => {
     apiCall()
-    console.log("api call happening")
   }, [apiCall])
 
   /** Assign the data in a new State so if any filter is applied then it can be reassigned as new results in this state */
@@ -31,7 +29,6 @@ const Store = ({ apiCall }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const searchProduct = (e) => {
     e.preventDefault()
-
     /** Search using free text, if any one is true, result will appear */
     if (searchQuery !== "") {
       const trimmedQuery = searchQuery.trim().split(" ").filter(word => word !== '').join(' ').toLowerCase()
@@ -39,7 +36,9 @@ const Store = ({ apiCall }) => {
     }
   }
 
+  const previousProducts = useRef([])
 
+  /** States to check individual filters */
   const [poloType, setPoloType] = useState(false)
   const [hoodieType, setHoodieType] = useState(false)
   const [basicType, setBasicType] = useState(false)
@@ -58,48 +57,189 @@ const Store = ({ apiCall }) => {
   const [priceAround450, setPriceAround450] = useState(false)
   const [priceAbove450, setPriceAbove450] = useState(false)
 
-
   useEffect(() => {
     if (poloType === true) {
-      setUpdatedProducts(data?.filter(product => product.type === 'Polo'))
-    } else if (hoodieType === true) {
-      setUpdatedProducts(data?.filter(product => product.type === 'Hoodie'))
-    } else if (basicType === true) {
-      setUpdatedProducts(data?.filter(product => product.type === 'Basic'))
-    } else if (genderMen === true) {
-      setUpdatedProducts(data?.filter(product => product.gender === 'Men'))
-    } else if (genderWomen === true) {
-      setUpdatedProducts(data?.filter(product => product.gender === 'Women'))
-    } else if (colorBlack === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Black'))
-    } else if (colorBlue === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Blue'))
-    } else if (colorGreen === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Green'))
-    } else if (colorPink === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Pink'))
-    } else if (colorGrey === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Grey'))
-    } else if (colorRed === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Red'))
-    } else if (colorPurple === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Purple'))
-    } else if (colorWhite === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'White'))
-    } else if (colorYellow === true) {
-      setUpdatedProducts(data?.filter(product => product.color === 'Yellow'))
-    } else if (priceLessThan250 === true) {
-      setUpdatedProducts(data?.filter(product => product.price <= 250))
-    } else if (priceAround450 === true) {
-      setUpdatedProducts(data?.filter(product => product.price > 250 && product.price <= 450))
-    } else if (priceAbove450 === true) {
-      setUpdatedProducts(data?.filter(product => product.price > 450))
-    } else if (poloType === false || hoodieType === false || basicType === false || genderMen === false || genderWomen === false || colorBlack === false || colorBlue === false || colorGreen === false || colorPink === false || colorRed === false || colorGrey === false || colorPurple === false || colorWhite === false || colorYellow === false || priceLessThan250 === false || priceAround450 === false || priceAbove450 === false) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.type === 'Polo'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [poloType])
+
+  useEffect(() => {
+    if (hoodieType === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.type === 'Hoodie'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [hoodieType])
+
+  useEffect(() => {
+    if (basicType === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.type === 'Basic'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [basicType])
+
+  useEffect(() => {
+    if (genderMen === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.gender === 'Men'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [genderMen])
+
+  useEffect(() => {
+    if (genderWomen === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.gender === 'Women'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [genderWomen])
+
+  useEffect(() => {
+    if (colorBlack === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Black'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorBlack])
+
+  useEffect(() => {
+    if (colorBlue === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Blue'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorBlue])
+
+  useEffect(() => {
+    if (colorGreen === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Green'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorGreen])
+
+  useEffect(() => {
+    if (colorPink === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Pink'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorPink])
+
+  useEffect(() => {
+    if (colorGrey === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Grey'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorGrey])
+
+  useEffect(() => {
+    if (colorRed === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Red'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorRed])
+
+  useEffect(() => {
+    if (colorPurple === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Purple'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorPurple])
+
+  useEffect(() => {
+    if (colorWhite === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'White'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorWhite])
+
+  useEffect(() => {
+    if (colorYellow === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.color === 'Yellow'))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [colorYellow])
+
+  useEffect(() => {
+    if (priceLessThan250 === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.price <= 250))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [priceLessThan250])
+
+  useEffect(() => {
+    if (priceAround450 === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.price > 250 && product.price <= 450))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [priceAround450])
+
+  useEffect(() => {
+    if (priceAbove450 === true) {
+      setUpdatedProducts(updatedProducts?.filter(product => product.price > 450))
+      previousProducts.current = updatedProducts
+    } else {
+      setUpdatedProducts(previousProducts.current)
+    }
+  }, [priceAbove450])
+
+  useEffect(() => {
+    if (poloType === false && hoodieType === false && basicType === false && genderMen === false && genderWomen === false && colorBlack === false && colorBlue === false && colorGreen === false && colorPink === false && colorRed === false && colorGrey === false && colorPurple === false && colorWhite === false && colorYellow === false && priceLessThan250 === false && priceAround450 === false && priceAbove450 === false) {
       setUpdatedProducts(data)
     }
   }, [poloType, hoodieType, basicType, genderMen, genderWomen, colorBlack, colorBlue, colorGreen, colorPink, colorRed, colorGrey, colorPurple, colorWhite, colorYellow, priceLessThan250, priceAround450, priceAbove450])
 
+  /** state to show the side filters menu in mobile screen */
   const [showFilters, setShowFilters] = useState(false)
+
+  /** Function to clear all the filters */
+  const clearAllFilters = () => {
+    setPoloType(false)
+    setHoodieType(false)
+    setBasicType(false)
+    setColorBlack(false)
+    setColorBlue(false)
+    setColorGreen(false)
+    setColorGrey(false)
+    setColorPink(false)
+    setColorPurple(false)
+    setColorRed(false)
+    setColorWhite(false)
+    setColorYellow(false)
+    setGenderMen(false)
+    setGenderWomen(false)
+    setPriceLessThan250(false)
+    setPriceAround450(false)
+    setPriceAbove450(false)
+    document.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false)
+  }
 
   return (
     <div className='px-12 flex gap-16 justify-center md:justify-between w-full h-full pb-8 relative'>
@@ -110,15 +250,19 @@ const Store = ({ apiCall }) => {
             <div className='flex w-full h-full justify-center items-center text-xl relative'>Loading...</div> :
             loading === false && error === null && data !== null ?
               <>
-                <div className={!showFilters ? 'hidden md:grid md:w-2/5 lg:w-1/5 md:border md:mt-24 md:div-shadow md:p-6 md:h-fit gap-2 div-shadow' : 'absolute top-0 p-10 w-full bg-white z-50'}>
+                <div className={!showFilters ? 'hidden md:grid md:w-2/5 lg:w-1/5 md:border md:mt-24 md:div-shadow md:p-6 md:h-fit gap-2 div-shadow' : 'absolute top-0 p-10 w-full bg-white z-50 transition-opacity'}>
                   {
-                    showFilters ? <div className='absolute border bg-black text-white px-4 py-2 top-10 right-10' onClick={() => {
+                    showFilters ? <div className='absolute border bg-black text-white px-4 py-2 top-10 right-10 cursor-pointer z-40' onClick={() => {
                       if (showFilters === true) {
                         setShowFilters(false)
                       }
                     }}>X</div> : null
                   }
-                  <div className='flex flex-col gap-2'>
+                  <div className='flex flex-col gap-2 relative'>
+                    <button
+                      className={`absolute bg-green-600 top-0 px-3 py-1 text-sm text-white ${!showFilters ? 'right-0' : 'left-20'}`}
+                      onClick={clearAllFilters}
+                    >Clear All Filters</button>
                     <h3 className="font-semibold">Color</h3>
                     <div className='grid'>
                       <div className='flex gap-3 px-2'>
@@ -231,7 +375,12 @@ const Store = ({ apiCall }) => {
                           id="gender_men"
                           value={genderMen}
                           onChange={() => {
-                            !genderMen ? setGenderMen(true) : setGenderMen(false)
+                            if (!genderMen) {
+                              setGenderMen(true)
+                              setGenderWomen(false)
+                            } else {
+                              setGenderMen(false)
+                            }
                           }}
                         />
                         <label htmlFor="gender_men">Men</label>
@@ -242,7 +391,12 @@ const Store = ({ apiCall }) => {
                           id="gender_women"
                           value={genderWomen}
                           onClick={() => {
-                            !genderWomen ? setGenderWomen(true) : setGenderWomen(false)
+                            if (!genderWomen) {
+                              setGenderWomen(true)
+                              setGenderMen(false)
+                            } else {
+                              setGenderWomen(false)
+                            }
                           }}
                         />
                         <label htmlFor="gender_women">Women</label>
@@ -262,7 +416,7 @@ const Store = ({ apiCall }) => {
                         <input type="checkbox" id="rs251-450" value={priceAround450} onClick={() => {
                           !priceAround450 ? setPriceAround450(true) : setPriceAround450(false)
                         }} />
-                        <label htmlFor="rs0-250">Rs251 - Rs450</label>
+                        <label htmlFor="rs251-450">Rs251 - Rs450</label>
                       </div>
                       <div className='flex gap-3 px-2'>
                         <input type="checkbox" id="above-rs450" value={priceAbove450} onClick={() => {
