@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, memo, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { allData } from '../redux/reducers/allProductsSlice'
 import { SearchIcon } from '../assets'
@@ -7,7 +7,6 @@ import ProductCard from '../components/ProductCard'
 
 
 const Store = ({ apiCall }) => {
-  console.log('store re-render')
   const allProductsData = useSelector(allData)  /** Api response object with JSON data from redux state after the api call */
   const { data, loading, error } = allProductsData    /** destructuring the state that comes from redux */
 
@@ -39,6 +38,10 @@ const Store = ({ apiCall }) => {
   const [searchQuery, setSearchQuery] = useState('')
   /** State to store filtered products */
   const [finalFiltered, setFinalFiltered] = useState([])
+  /** State to get suggestions array */
+  const [suggestions, setSuggestions] = useState([])
+  /** state for no suggestions */
+  const [noSuggestions, setNoSuggestions] = useState(false)
 
 
   /** Below commented section is used to make api call using custom hook which runs on every re-render of the component. Which is not very optimal way to handle it. */
@@ -57,13 +60,18 @@ const Store = ({ apiCall }) => {
     setShowAllProducts(true)
   }, [data])
 
-  const searchProduct = (e) => {
-    e.preventDefault()
+  const mainSearchFunctionality = (searchQuery) => {
     /** Search using free text, if any one is true, result will appear */
     if (searchQuery !== "") {
-      const trimmedQuery = searchQuery.trim().split(" ").filter(word => word !== '').join(' ').toLowerCase()
-      setUpdatedProducts(data?.filter(product => product.name.toLowerCase() === trimmedQuery || product.type.toLowerCase() === trimmedQuery || product.color.toLowerCase() === trimmedQuery))
+      const trimmedQuery = searchQuery?.trim().split(" ").filter(word => word !== '').join(' ').toLowerCase()
+      setUpdatedProducts(data?.filter(product => product.name.toLowerCase() === trimmedQuery || product.type.toLowerCase() === trimmedQuery || product.color.toLowerCase() === trimmedQuery || product.gender.toLowerCase() === trimmedQuery))
     }
+  }
+
+  /** search product function to use in search while hitting enter after typing */
+  const searchProduct = (e) => {
+    e.preventDefault()
+    mainSearchFunctionality(e.target.value)
   }
 
   /** resetting the updated products data to default when states are cleared or checked out */
@@ -74,12 +82,14 @@ const Store = ({ apiCall }) => {
   }, [poloType, hoodieType, basicType, genderMen, genderWomen, colorBlack, colorBlue, colorGreen, colorPink, colorRed, colorGrey, colorPurple, colorWhite, colorYellow, priceLessThan250, priceAround450, priceAbove450])
 
   /** state to store all the filteration properties */
-  const [filterObject, setFilterObject] = useState({
+  const initialFilterState = {
     color: [],
     gender: [],
     type: [],
     price: []
-  })
+  }
+  const [filterObject, setFilterObject] = useState(initialFilterState)
+  /** filterObject state end */
 
   /** defining filter function to apply filteration feature */
   const filterFunction = () => {
@@ -216,27 +226,58 @@ const Store = ({ apiCall }) => {
     setPriceAround450(false)
     setPriceAbove450(false)
     document.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false)
-    setFilterObject({
-      color: [],
-      gender: [],
-      type: [],
-      price: []
-    })
+    setFilterObject(initialFilterState)
+    setShowAllProducts(true)
   }
+
+  /** function for filter the suggestions. This will give us all the product names in the suggestions when user types any name, color, type, gender. Remember it will show us the names of the products that includes the types query in it's names or colors or types or gender */
+  const getSuggestionFilters = () => {
+    const suggestArr = []
+    data?.forEach(product => {
+      const { name, gender, type, color } = product
+      if (name.toLowerCase().includes(searchQuery.toLowerCase().trim()) || gender.toLowerCase().includes(searchQuery.toLowerCase().trim()) || type.toLowerCase().includes(searchQuery.toLowerCase().trim()) || color.toLowerCase().includes(searchQuery.toLowerCase().trim())) {
+        suggestArr.push(name)
+        // console.log(name)
+      }
+    })
+
+    if (suggestArr.length === 0) {
+      setNoSuggestions(true)
+    } else {
+      setSuggestions(suggestArr)
+    }
+  }
+
+  /** Debouncing using useEffect for searching */
+  useEffect(() => {
+    if (searchQuery !== '') {
+      setShowAllProducts(true)
+      const timer = setTimeout(() => {
+        // console.log('hi')
+        // mainSearchFunctionality()
+        getSuggestionFilters()
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else {
+      setSuggestions([])
+      setUpdatedProducts(data)
+      setNoSuggestions(false)
+    }
+  }, [searchQuery])
 
   return (
     <div className='px-12 flex gap-16 justify-center md:justify-between w-full h-full pb-8 relative'>
       {
         error !== null && loading === false && data === null ?
-        // Showing error state here
+          // Showing error state here
           <h1 className='font-red-700 text-xl'>{error}</h1> :
           loading === true && data === null && error === null ?
-          // showing loading state here
+            // showing loading state here
             <div className='flex w-full h-full justify-center items-center text-xl relative'>Loading...</div> :
             loading === false && error === null && data !== null ?
-            // showing all filters and data
+              // showing all filters and data
               <>
-              {/* sidebar with filters here */}
+                {/* sidebar with filters here */}
                 <div className={!showFilters ? 'hidden md:grid md:w-2/5 lg:w-1/5 md:border md:mt-24 md:div-shadow md:p-6 md:h-fit gap-2 div-shadow' : 'absolute top-0 p-10 w-full bg-white z-50 transition-opacity'}>
                   {
                     showFilters ? <div className='absolute border bg-black text-white px-4 py-2 top-10 right-10 cursor-pointer z-40' onClick={() => {
@@ -246,10 +287,13 @@ const Store = ({ apiCall }) => {
                     }}>X</div> : null
                   }
                   <div className='flex flex-col gap-2 relative'>
-                    <button
-                      className={`absolute bg-green-600 top-0 px-3 py-1 text-sm text-white ${!showFilters ? 'right-0' : 'left-20'}`}
-                      onClick={clearAllFilters}
-                    >Clear All Filters</button>
+                    {
+                      JSON.stringify(filterObject) !== JSON.stringify(initialFilterState) ?
+                        <button
+                          className={`absolute bg-green-600 top-0 px-3 py-1 text-sm text-white ${!showFilters ? 'right-0' : 'left-20'}`}
+                          onClick={clearAllFilters}
+                        >Clear All Filters</button> : null
+                    }
                     <h3 className="font-semibold">Color</h3>
                     <div className='grid'>
                       <div className='flex gap-3 px-2'>
@@ -432,7 +476,7 @@ const Store = ({ apiCall }) => {
                 <div className='w-3/4 mt-8'>
                   <div className='flex w-full justify-center gap-4'>
                     {/* search bar here */}
-                    <form className='flex w-full justify-center gap-1'>
+                    <form className='flex w-full justify-center gap-1 relative'>
                       <input
                         type="text"
                         className='border-b-2 focus:outline-0 focus:ring-0 py-2 w-[80%] md:w-[40%]'
@@ -440,13 +484,34 @@ const Store = ({ apiCall }) => {
                         value={searchQuery}
                         onChange={(e) => {
                           setSearchQuery(e.target.value)
+                          // if (e.target.value === '') {
+                          //   setUpdatedProducts(data)
+                          // }
                         }}
                       />
                       <button className='bg-gray-400 px-4 py-2 rounded' onClick={searchProduct} type='submit'>
                         <SearchIcon />
                       </button>
+                      {/* suggestions div here */}
+                      {
+                        (suggestions.length > 0 && noSuggestions === false) ?
+                          <div className='absolute flex flex-col gap-2 p-2 w-[85%] md:w-[65%] lg:w-[40%] top-10 left-0 lg:left-44 xl:left-72 bg-white z-50 shadow-xl border'>
+                            {suggestions?.map((sugg, index) => (
+                              <button className='hover:bg-gray-50 border-b' key={index} type='submit' onClick={(e) => {
+                                e.preventDefault()
+                                mainSearchFunctionality(sugg)
+                                setSearchQuery(sugg)
+                                // console.log(sugg)
+                                setSuggestions([])
+                              }}>{sugg}</button>
+                            ))}
+                          </div> :
+                          (suggestions.length === 0 && noSuggestions === true) ?
+                            <div className='absolute flex flex-col gap-2 p-2 w-[85%] md:w-[65%] lg:w-[40%] top-10 left-0 lg:left-44 xl:left-72 bg-white z-50 shadow-xl border'>No Suggestions Available</div> :
+                            null
+                      }
                     </form>
-                      {/* showing filters button for small screens */}
+                    {/* showing filters button for small screens */}
                     <button className='md:hidden px-4 py-2 rounded bg-gray-400 text-white' onClick={() => {
                       showFilters ? setShowFilters(false) : setShowFilters(true)
                     }}>Filter</button>
@@ -460,7 +525,7 @@ const Store = ({ apiCall }) => {
                           <ProductCard product={product} />
                         </div>
                       }) :
-                      showAllProducts === false && finalFiltered.length > 0 ?
+                        showAllProducts === false && finalFiltered.length > 0 ?
                           finalFiltered?.map((product, index) => {
                             return <div key={index} className='w-full lg:w-[30%]'>
                               <ProductCard product={product} />
